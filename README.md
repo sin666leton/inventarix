@@ -5,8 +5,8 @@
 ## Fitur Utama
 
 - Manajemen **Kategori** barang
-- Manajemen **Item**/aset
-- Sistem **Autentikasi** (Login, Register)
+- Manajemen **Item**
+- Sistem **Autentikasi**
 - Manajemen **Staff**
 - Transaksi **masuk/keluar** barang
 - API **RESTful** siap integrasi
