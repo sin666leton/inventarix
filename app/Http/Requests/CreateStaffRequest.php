@@ -21,7 +21,7 @@ class CreateStaffRequest extends FormRequest
     public function prepareForValidation()
     {
         $this->merge([
-            'role_id' => Role::where('name', 'staff')->first()->value('id')
+            'role_id' => Role::where('name', 'staff')->first()->id
         ]);
     }
 

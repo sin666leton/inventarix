@@ -38,4 +38,21 @@ interface Transaction
      * @return bool
      */
     public function delete(int $id): bool;
+
+    /**
+     * Cari transaksi beserta pengguna dan itemnya
+     * 
+     * @param int $id
+     * @return \App\Models\Transaction
+     */
+    public function findWithUserAndItem(int $id): \App\Models\Transaction;
+
+    /**
+     * Cari transaksi staff
+     * 
+     * @param int $user_id
+     * @param int $id
+     * @return \App\Models\Transaction
+     */
+    public function findStaffTransaction(int $user_id, int $id): \App\Models\Transaction;
 }

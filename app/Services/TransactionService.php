@@ -4,6 +4,7 @@ namespace App\Services;
 use App\Contracts\Transaction;
 use App\DTOs\TransactionDTO;
 use App\Exceptions\InsufficientStockException;
+use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -15,9 +16,13 @@ class TransactionService
         protected Transaction $transactionRepository
     ) {}
 
-    public function findTransaction(int $id)
+    public function findTransaction(User $user, int $id)
     {
-        $transaction = Cache::remember("transaction_$id", 3600, fn() => $this->transactionRepository->find($id));
+        if ($user->role->name == 'staff') {
+            $transaction = $this->transactionRepository->findStaffTransaction($user->id, $id);
+        } else {
+            $transaction = $this->transactionRepository->find($id);
+        }
 
         return $transaction;
     }
@@ -63,7 +68,7 @@ class TransactionService
         DB::beginTransaction();
 
         try {
-            $transaction = $this->findTransaction($id);
+            $transaction = $this->transactionRepository->find($id);
 
             if ($transaction->type == 'out') {
                 $result = $this->itemService->incrementStockItem($transaction->item_id, $transaction->quantity);
@@ -77,10 +82,7 @@ class TransactionService
 
             $bool = $this->transactionRepository->delete($id);
 
-            if ($bool) {
-                Cache::forget("transaction_$id");
-                DB::commit();
-            }
+            if ($bool) DB::commit();
             
             return $bool;
         } catch (ModelNotFoundException $th) {
@@ -90,5 +92,16 @@ class TransactionService
             DB::rollBack();
             throw $th;
         }
+    }
+
+    public function findTransactionWithUserAndItem(User $user, int $id)
+    {
+        if ($user->role->name == 'staff') {
+            $transaction = $this->transactionRepository->findStaffTransaction($user->id, $id);
+        } else {
+            $transaction = $this->transactionRepository->findWithUserAndItem($id);
+        }
+
+        return $transaction;
     }
 }

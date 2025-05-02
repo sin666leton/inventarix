@@ -8,8 +8,7 @@ class TransactionRepository implements \App\Contracts\Transaction
 {
     public function find(int $id): Transaction
     {
-        $transaction = Transaction::select(['id', 'user_id', 'item_id', 'type', 'quantity', 'description', 'created_at'])
-            ->where('id', $id)
+        $transaction = Transaction::where('id', $id)
             ->firstOr(function () {
                 throw new TransactionNotFound();
             });
@@ -37,5 +36,34 @@ class TransactionRepository implements \App\Contracts\Transaction
             });
 
         return $transaction->delete();
+    }
+
+    public function findWithUserAndItem(int $id): Transaction
+    {
+        $transaction = Transaction::with([
+                'user' => function ($query) {
+                    $query->select(['id', 'name']);
+                },
+                'item' => function ($query) {
+                    $query->select(['id', 'name']);
+                }
+            ])
+            ->where('id', $id)
+            ->firstOr(function () {
+                throw new TransactionNotFound();
+            });
+
+        return $transaction;
+    }
+
+    public function findStaffTransaction(int $user_id, int $id): Transaction
+    {
+        $transaction = Transaction::where('id', $id)
+            ->where('user_id', $user_id)
+            ->firstOr(function () {
+                throw new TransactionNotFound();
+            });
+
+        return $transaction;
     }
 }

@@ -9,6 +9,12 @@ Route::middleware(['jsonOnly'])->group(function () {
         ->group(base_path('routes/v1/api.php'));
 });
 
+Route::middleware(['jsonOnly'])->group(function () {
+    Route::prefix('/v2')
+        ->name('v2.')
+        ->group(base_path('routes/v2/api.php'));
+});
+
 Route::fallback(function () {
     return response()->json([
         'message' => 'Route Not Exists.'

@@ -143,7 +143,7 @@ class TransactionControllerTest extends TestCase
         ]);
 
         $transaction = Transaction::create([
-            'user_id' => $this->admin->id,
+            'user_id' => $this->staff->id,
             'item_id' => $item->id,
             'type' => 'out',
             'quantity' => 5,

@@ -66,10 +66,10 @@ class TransactionServiceTest extends TestCase
         $this->expectExceptionMessage('Transaction Not Found.');
         $this->expectExceptionCode(404);
 
-        $this->transactionService->findTransaction(999);
+        $this->transactionService->findTransaction($this->userTest, 999);
     }
 
-    public function test_find_transcation_should_cache_return_Transaction_with_valid_id()
+    public function test_find_transcation_and_return_Transaction_with_valid_id()
     {
         $transaction = Transaction::create([
             'user_id' => $this->userTest->id,
@@ -78,10 +78,31 @@ class TransactionServiceTest extends TestCase
             'quantity' => 10
         ]);
 
-        $result = $this->transactionService->findTransaction($transaction->id);
+        $result = $this->transactionService->findTransaction($this->userTest, $transaction->id);
 
         $this->assertInstanceOf(Transaction::class, $result);
-        $this->assertInstanceOf(Transaction::class, Cache::get("transaction_".$transaction->id));
+    }
+
+    public function test_find_transaction_when_user_is_staff_and_return_transaction_with_valid_id()
+    {
+        $role = Role::create(['name' => 'staff']);
+        $staff = User::create([
+            'role_id' => $role->id,
+            'name' => 'Staff',
+            'email' => 'staff@example.com',
+            'password' => 'test'
+        ]);
+
+        $transaction = Transaction::create([
+            'user_id' => $staff->id,
+            'item_id' => $this->item->id,
+            'type' => 'in',
+            'quantity' => 10
+        ]);
+
+        $result = $this->transactionService->findTransaction($staff, $transaction->id);
+
+        $this->assertInstanceOf(Transaction::class, $result);
     }
 
     public function test_create_transaction_throws_ModelNotException_with_invalid_item_id()
@@ -258,5 +279,82 @@ class TransactionServiceTest extends TestCase
         $result = $this->transactionService->paginateTransaction();
 
         $this->assertInstanceOf(LengthAwarePaginator::class, $result);
+    }
+
+    public function test_findWithUserAndItem_throws_ModelNotFoundException_with_invalid_id()
+    {
+        $this->expectException(ModelNotFoundException::class);
+        $this->expectExceptionMessage("Transaction Not Found.");
+        $this->expectExceptionCode(404);
+
+        $role = Role::create(['name' => 'admin']);
+        $user = User::create([
+            'role_id' => $role->id,
+            'name' => 'admin',
+            'email' => 'admin@example.com',
+            'password' => 'test'
+        ]);
+
+        $this->transactionService->findTransactionWithUserAndItem($user, 999);
+    }
+
+    public function test_findWithUserAndItem_as_admin_and_return_Transaction()
+    {
+        $category = Category::create(['name' => 'Elektronik']);
+        $role = Role::create(['name' => 'admin']);
+        $user = User::create([
+            'role_id' => $role->id,
+            'name' => 'admin',
+            'email' => 'admin@example.com',
+            'password' => 'test'
+        ]);
+        $item = Item::create([
+            'category_id' => $category->id,
+            'name' => 'laptop',
+            'code' => '#LPT',
+            'stock' => 20
+        ]);
+        $transaction = Transaction::create([
+            'user_id' => $user->id,
+            'item_id' => $item->id,
+            'type' => 'in',
+            'quantity' => 4,
+            'description' => null
+        ]);
+
+        $result = $this->transactionService->findTransactionWithUserAndItem($user, $transaction->id);
+
+        $this->assertInstanceOf(Transaction::class, $result);
+        $this->assertEquals('admin', $result->user->name);
+        $this->assertEquals('laptop', $result->item->name);
+    }
+
+    public function test_findWithUserAndItem_as_staff_and_return_Transaction()
+    {
+        $category = Category::create(['name' => 'Elektronik']);
+        $role = Role::create(['name' => 'staff']);
+        $user = User::create([
+            'role_id' => $role->id,
+            'name' => 'staff',
+            'email' => 'staff@example.com',
+            'password' => 'test'
+        ]);
+        $item = Item::create([
+            'category_id' => $category->id,
+            'name' => 'laptop',
+            'code' => '#LPT',
+            'stock' => 20
+        ]);
+        $transaction = Transaction::create([
+            'user_id' => $user->id,
+            'item_id' => $item->id,
+            'type' => 'in',
+            'quantity' => 4,
+            'description' => null
+        ]);
+
+        $result = $this->transactionService->findTransactionWithUserAndItem($user, $transaction->id);
+
+        $this->assertInstanceOf(Transaction::class, $result);
     }
 }

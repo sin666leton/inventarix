@@ -115,7 +115,17 @@ class AuthController extends Controller
      * 
      *  @OA\Response(
      *   response=200,
-     *   description="Logged out successfully."
+     *   description="Logged out successfully.",
+     *  
+     *   @OA\JsonContent(
+     *    type="object",
+     *    
+     *    @OA\Property(
+     *     property="message",
+     *     type="string",
+     *     example="Logged out successfully."
+     *    )
+     *   )
      *  ),
      * 
      *  @OA\Response(
@@ -132,7 +142,17 @@ class AuthController extends Controller
      * 
      *  @OA\Response(
      *   response=200,
-     *   description="Logged out successfully."
+     *   description="Logged out successfully.",
+     *  
+     *   @OA\JsonContent(
+     *    type="object",
+     *    
+     *    @OA\Property(
+     *     property="message",
+     *     type="string",
+     *     example="Logged out successfully."
+     *    )
+     *   )
      *  ),
      * 
      *  @OA\Response(

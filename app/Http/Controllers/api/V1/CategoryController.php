@@ -295,10 +295,7 @@ class CategoryController extends Controller
 
         $category = $this->categoryService->updateCategory(
             intval($id),
-            new CategoryDTO(
-                $request->validated('name'),
-                $request->validated('description')
-            )
+            CategoryDTO::fromRequest($request)
         );
 
         return response()->json([

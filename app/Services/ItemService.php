@@ -80,6 +80,7 @@ class ItemService
         $result = $this->itemRepository->updateStock($id, $newStock);
 
         if ($result) Cache::forget("item_$id");
+        
         return $result;
     }
 

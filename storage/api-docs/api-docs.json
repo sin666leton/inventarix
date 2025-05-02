@@ -134,7 +134,20 @@
                 "operationId": "6aae892e05ba2b34e4464f7c8a47e309",
                 "responses": {
                     "200": {
-                        "description": "Logged out successfully."
+                        "description": "Logged out successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Logged out successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "Unauthorized"
@@ -156,7 +169,20 @@
                 "operationId": "6b22a194bf58a2f43988c1f2b8819d74",
                 "responses": {
                     "200": {
-                        "description": "Logged out successfully."
+                        "description": "Logged out successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Logged out successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "Unauthorized"
@@ -1637,6 +1663,93 @@
                                         }
                                     },
                                     "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v2/transactions/{id}": {
+            "get": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Retrieves details of a specific transaction.",
+                "operationId": "cf1070b3c553d6eb47ee854be6af8ad5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Transaction ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "Admin": {
+                                        "summary": "Admin response",
+                                        "value": {
+                                            "data": {
+                                                "id": 1,
+                                                "user_id": 1,
+                                                "item_id": 1,
+                                                "type": "in",
+                                                "quantity": 1,
+                                                "description": "Optional description",
+                                                "created_at": "2024-01-01T12:00:00Z",
+                                                "updated_at": "2024-01-02T15:30:00Z",
+                                                "user": {
+                                                    "id": 1,
+                                                    "name": "someusername"
+                                                },
+                                                "item": {
+                                                    "id": 1,
+                                                    "name": "Laptop"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "Staff": {
+                                        "summary": "Staff response",
+                                        "value": {
+                                            "data": {
+                                                "id": 1,
+                                                "user_id": 1,
+                                                "item_id": 1,
+                                                "type": "in",
+                                                "quantity": 1,
+                                                "description": "Optional description",
+                                                "created_at": "2024-01-01T12:00:00Z",
+                                                "updated_at": "2024-01-02T15:30:00Z"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Transaction Not Found.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ModelNotFound"
                                 }
                             }
                         }

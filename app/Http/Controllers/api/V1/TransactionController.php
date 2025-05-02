@@ -176,7 +176,7 @@ class TransactionController extends Controller
     {
         if (!$request->user()->tokenCan('view:transaction')) throw new ActionForbiddenException();
 
-        $transaction = $this->transactionService->findTransaction(intval($id));
+        $transaction = $this->transactionService->findTransaction($request->user(), intval($id));
 
         return response()->json([
             'data' => $transaction

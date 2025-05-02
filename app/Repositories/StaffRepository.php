@@ -49,6 +49,7 @@ class StaffRepository implements \App\Contracts\Staff
                 $query->where('name', 'staff');
             }
         )
+        ->where('id', $id)
         ->firstOr(function () {
             throw new StaffNotFoundException();
         });

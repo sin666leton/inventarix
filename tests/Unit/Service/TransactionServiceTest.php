@@ -4,7 +4,11 @@ namespace Tests\Unit\Service;
 
 use App\DTOs\TransactionDTO;
 use App\Exceptions\InsufficientStockException;
+use App\Models\Category;
+use App\Models\Item;
+use App\Models\Role;
 use App\Models\Transaction;
+use App\Models\User;
 use App\Services\ItemService;
 use App\Services\TransactionService;
 use Illuminate\Database\Eloquent\Collection;
@@ -59,6 +63,20 @@ class TransactionServiceTest extends TestCase
 
         $id = 999;
 
+        $role = new Role([
+            'id' => 1,
+            'name' => 'admin'
+        ]);
+
+        $user = new User([
+            'id' => 4,
+            'role_id' => $role->id,
+            'name' => 'balmond',
+            'email' => 'balmond@example.com'
+        ]);
+
+        $user->setRelation('role', $role);
+
         $this->transactionRepository
             ->shouldReceive('find')
             ->once()
@@ -67,19 +85,26 @@ class TransactionServiceTest extends TestCase
                 new ModelNotFoundException('Transaction Not Found.', 404)
             ]);
 
-        Cache::shouldReceive('remember')
-            ->once()
-            ->with("transaction_$id", 3600, \Closure::class)
-            ->andReturnUsing(function ($key, $ttl, $closure) {
-                return $closure();
-            });
-
-        $this->transactionService->findTransaction($id);
+        $this->transactionService->findTransaction($user, $id);
     }
 
-    public function test_find_transcation_should_cache_return_Transaction_with_valid_id()
+    public function test_find_transaction_return_Transaction_with_valid_id()
     {
         $id = 1;
+
+        $role = new Role([
+            'id' => 1,
+            'name' => 'admin'
+        ]);
+
+        $user = new User([
+            'id' => 4,
+            'role_id' => $role->id,
+            'name' => 'balmond',
+            'email' => 'balmond@example.com'
+        ]);
+
+        $user->setRelation('role', $role);
 
         $this->transactionRepository
             ->shouldReceive('find')
@@ -87,14 +112,36 @@ class TransactionServiceTest extends TestCase
             ->with($id)
             ->andReturn(new Transaction());
 
-        Cache::shouldReceive('remember')
-            ->once()
-            ->with("transaction_$id", 3600, \Closure::class)
-            ->andReturnUsing(function ($key, $ttl, $closure) {
-                return $closure();
-            });
+        $result = $this->transactionService->findTransaction($user, $id);
+    
+        $this->assertInstanceOf(Transaction::class, $result);
+    }
 
-        $result = $this->transactionService->findTransaction($id);
+    public function test_find_transaction_when_user_is_staff_and_return_transaction_with_valid_id()
+    {
+        $id = 1;
+
+        $role = new Role([
+            'id' => 2,
+            'name' => 'staff'
+        ]);
+
+        $staff = (new User())->forceFill([
+            'id' => 1,
+            'role_id' => $role->id,
+            'name' => 'balmond',
+            'email' => 'balmond@example.com'
+        ]);
+
+        $staff->setRelation('role', $role);
+
+        $this->transactionRepository
+            ->shouldReceive('findStaffTransaction')
+            ->once()
+            ->with($staff->id, $id)
+            ->andReturn(new Transaction());
+        
+        $result = $this->transactionService->findTransaction($staff, $id);
     
         $this->assertInstanceOf(Transaction::class, $result);
     }
@@ -155,7 +202,7 @@ class TransactionServiceTest extends TestCase
         $this->transactionService->createTransaction($dto);
     }
 
-    public function test_create_transaction_with_valid_data_and_return_Transaction_when_transaction_type_is_out()
+    public function test_create_transaction_should_forget_cache_with_valid_data_and_return_Transaction_when_transaction_type_is_out()
     {
         Cache::spy();
 
@@ -191,7 +238,7 @@ class TransactionServiceTest extends TestCase
         $this->assertInstanceOf(Transaction::class, $result);
     }
 
-    public function test_create_transaction_with_valid_data_and_return_Transaction_when_transaction_type_is_in()
+    public function test_create_transaction_should_forget_cache_with_valid_data_and_return_Transaction_when_transaction_type_is_in()
     {
         Cache::spy();
 
@@ -243,13 +290,6 @@ class TransactionServiceTest extends TestCase
                 new ModelNotFoundException('Transaction Not Found.', 404)
             ]);
 
-        Cache::shouldReceive('remember')
-            ->once()
-            ->with("transaction_$id", 3600, \Closure::class)
-            ->andReturnUsing(function ($key, $ttl, $closure) {
-                return $closure();
-            });
-
         DB::shouldReceive('beginTransaction');
         DB::shouldReceive('rollBack');
         
@@ -264,13 +304,6 @@ class TransactionServiceTest extends TestCase
         $qty = 10;
         $item_id = 1;
         $current_stock = 10;
-
-        Cache::shouldReceive('remember')
-            ->once()
-            ->with("transaction_$id", 3600, \Closure::class)
-            ->andReturnUsing(function ($key, $ttl, $closure) {
-                return $closure();
-            });
 
         DB::shouldReceive('beginTransaction');
         DB::shouldReceive('commit');
@@ -303,17 +336,12 @@ class TransactionServiceTest extends TestCase
             ->once()
             ->with($id)
             ->andReturn(true);
-
+            
         $result = $this->transactionService->deleteTransaction($id);
-
+        
         Cache::shouldHaveReceived('forget')
+            ->once()
             ->with("item_$item_id");
-
-        Cache::shouldHaveReceived('forget')
-            ->with("transaction_$id");
-
-        Cache::shouldHaveReceived('forget')
-            ->twice();
 
         $this->assertEquals(true, $result);
     }
@@ -327,13 +355,6 @@ class TransactionServiceTest extends TestCase
         $qty = 10;
         $item_id = 1;
         $current_stock = 5;
-
-        Cache::shouldReceive('remember')
-            ->once()
-            ->with("transaction_$id", 3600, \Closure::class)
-            ->andReturnUsing(function ($key, $ttl, $closure) {
-                return $closure();
-            });
 
         DB::shouldReceive('beginTransaction');
         DB::shouldReceive('rollBack');
@@ -367,13 +388,6 @@ class TransactionServiceTest extends TestCase
         $qty = 10;
         $item_id = 1;
         $current_stock = 10;
-
-        Cache::shouldReceive('remember')
-            ->once()
-            ->with("transaction_$id", 3600, \Closure::class)
-            ->andReturnUsing(function ($key, $ttl, $closure) {
-                return $closure();
-            });
 
         DB::shouldReceive('beginTransaction');
         DB::shouldReceive('commit');
@@ -411,13 +425,8 @@ class TransactionServiceTest extends TestCase
         $result = $this->transactionService->deleteTransaction($id);
 
         Cache::shouldHaveReceived('forget')
+            ->once()
             ->with("item_$item_id");
-
-        Cache::shouldHaveReceived('forget')
-            ->with("transaction_$id");
-
-        Cache::shouldHaveReceived('forget')
-            ->twice();
 
         $this->assertEquals(true, $result);
     }
@@ -446,5 +455,124 @@ class TransactionServiceTest extends TestCase
 
 
         $this->assertInstanceOf(LengthAwarePaginator::class, $result);
+    }
+
+    public function test_findTransactionWithUserAndItem_throws_ModelNotFoundException_with_invalid_id()
+    {
+        $this->expectException(ModelNotFoundException::class);
+        $this->expectExceptionMessage('Transaction Not Found.');
+        $this->expectExceptionCode(404);
+
+        $id = 999;
+
+        $role = new Role(['name' => 'admin']);
+        $user = new User([
+            'role_id' => $role->id,
+            'name' => 'admin'
+        ]);
+
+        $user->setRelation('role', $role);
+
+        $this->transactionRepository
+            ->shouldReceive('findWithUserAndItem')
+            ->once()
+            ->with($id)
+            ->andThrow(new ModelNotFoundException("Transaction Not Found.", 404));
+
+        $this->transactionService->findTransactionWithUserAndItem($user, $id);
+    }
+
+    public function test_findTransactionWithUserAndItem_as_admin_and_return_Transaction()
+    {
+        $id = 1;
+        $role = new Role(['name' => 'admin']);
+
+        $user = new User([
+            'id' => 2,
+            'role_id' => $role->id,
+            'name' => 'admin',
+            'email' => 'admin@example.com',
+        ]);
+
+        $user->setRelation('role', $role);
+
+        $item = new Item([
+            'id' => 3,
+            'name' => 'laptop',
+            'code' => '#LPT',
+            'stock' => 20
+        ]);
+
+        $transaction = new Transaction([
+            'id' => $id,
+            'user_id' => $user->id,
+            'item_id' => $item->id,
+            'type' => 'in',
+            'quantity' => 4,
+            'description' => null
+        ]);
+
+        $transaction->setRelations([
+            'user' => $user,
+            'item' => $item
+        ]);
+
+        $this->transactionRepository
+            ->shouldReceive('findWithUserAndItem')
+            ->once()
+            ->with($id)
+            ->andReturn($transaction);
+
+        $result = $this->transactionService->findTransactionWithUserAndItem($user, $id);
+
+        $this->assertInstanceOf(Transaction::class, $result);
+        $this->assertEquals('admin', $result->user->name);
+        $this->assertEquals('laptop', $result->item->name);
+    }
+
+    public function test_findTransactionWithUserAndItem_as_staff_and_return_Transaction()
+    {
+        $id = 1;
+        $role = new Role(['name' => 'staff']);
+
+        $user = (new User())->forceFill([
+            'id' => 2,
+            'role_id' => $role->id,
+            'name' => 'staff',
+            'email' => 'staff@example.com',
+        ]);
+
+        $user->setRelation('role', $role);
+
+        $item = new Item([
+            'id' => 3,
+            'name' => 'laptop',
+            'code' => '#LPT',
+            'stock' => 20
+        ]);
+
+        $transaction = new Transaction([
+            'id' => $id,
+            'user_id' => $user->id,
+            'item_id' => $item->id,
+            'type' => 'in',
+            'quantity' => 4,
+            'description' => null
+        ]);
+
+        $transaction->setRelations([
+            'user' => $user,
+            'item' => $item
+        ]);
+
+        $this->transactionRepository
+            ->shouldReceive('findStaffTransaction')
+            ->once()
+            ->with($user->id, $id)
+            ->andReturn($transaction);
+
+        $result = $this->transactionService->findTransactionWithUserAndItem($user, $id);
+
+        $this->assertInstanceOf(Transaction::class, $result);
     }
 }

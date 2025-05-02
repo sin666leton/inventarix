@@ -3,10 +3,13 @@
 namespace App\Http\Requests;
 
 use App\Models\User;
+use App\Traits\FailedAuthorizationTrait;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateStaffRequest extends FormRequest
 {
+    use FailedAuthorizationTrait;
+
     /**
      * Determine if the user is authorized to make this request.
      */
