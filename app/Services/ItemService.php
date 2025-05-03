@@ -8,13 +8,15 @@ use App\DTOs\ItemDTO;
 use App\DTOs\UpdateItemDTO;
 use App\Exceptions\InsufficientStockException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Log\LogManager;
 use Illuminate\Support\Facades\Cache;
 
 class ItemService
 {
     public function __construct(
         protected Item $itemRepository,
-        protected Category $categoryRepository
+        protected Category $categoryRepository,
+        protected LogManager $logger
     ) {}
 
     public function paginateItems(int $category_id, int $perPage = 10)
@@ -39,6 +41,11 @@ class ItemService
         
         $item = $this->itemRepository->create($category_id, $dto);
 
+        $this->logger->channel('model')->info('Create item.', [
+            'id' => $item->id,
+            'name' => $item->name
+        ]);
+
         return $item;
     }
 
@@ -47,6 +54,10 @@ class ItemService
         $item = $this->itemRepository->update($id, $dto);
 
         Cache::forget("item_$id");
+        $this->logger->channel('model')->info('Update item.', [
+            'id' => $item->id,
+            'name' => $item->name
+        ]);
 
         return $item;
     }
@@ -55,7 +66,12 @@ class ItemService
     {
         $result = $this->itemRepository->delete($id);
 
-        Cache::forget("item_$id");
+        if ($result) {
+            Cache::forget("item_$id");
+            $this->logger->channel('model')->info('Delete item.', [
+                'id' => $id,
+            ]);
+        }
 
         return $result;
     }
@@ -66,7 +82,14 @@ class ItemService
         if ($currentStock < $amount) throw new InsufficientStockException();
 
         $result = $this->itemRepository->updateStock($id, $currentStock - $amount);
-        if ($result) Cache::forget("item_$id");
+
+        if ($result) {
+            Cache::forget("item_$id");
+            $this->logger->channel('stocks')->info('Decrement stock item.', [
+                'id' => $id,
+                'amount' => $amount
+            ]);
+        }
 
         return $result;
     }
@@ -79,7 +102,13 @@ class ItemService
 
         $result = $this->itemRepository->updateStock($id, $newStock);
 
-        if ($result) Cache::forget("item_$id");
+        if ($result) {
+            Cache::forget("item_$id");
+            $this->logger->channel('stocks')->info('Increment stock item.', [
+                'id' => $id,
+                'amount' => $amount
+            ]);
+        }
         
         return $result;
     }
