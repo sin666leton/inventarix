@@ -10,6 +10,7 @@ use App\Models\Item;
 use App\Services\ItemService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Log\LogManager;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -24,6 +25,8 @@ class ItemServiceTest extends TestCase
 
     private $itemService;
 
+    private $logManager;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -33,12 +36,15 @@ class ItemServiceTest extends TestCase
          **/
         $this->itemRepository = Mockery::mock(\App\Contracts\Item::class);
         
+        /** @var LogManager&Mockery\MockInterface */
+        $this->logManager = Mockery::mock(LogManager::class);
+
         /** 
          * @var \App\Contracts\Category&Mockery\MockInterface
          **/
         $this->categoryRepository = Mockery::mock(\App\Contracts\Category::class);
 
-        $this->itemService = new ItemService($this->itemRepository, $this->categoryRepository);
+        $this->itemService = new ItemService($this->itemRepository, $this->categoryRepository, $this->logManager);
     }
 
     protected function tearDown(): void
@@ -188,6 +194,16 @@ class ItemServiceTest extends TestCase
             5
         );
 
+        $this->logManager
+            ->shouldReceive('channel')
+            ->once()
+            ->with('model')
+            ->andReturnSelf();
+
+        $this->logManager
+            ->shouldReceive('info')
+            ->once();
+
         $this->categoryRepository
             ->shouldReceive('exists')
             ->once()
@@ -245,6 +261,16 @@ class ItemServiceTest extends TestCase
             ->with($id, $dto)
             ->andReturn(new Item($dto->toArray()));
 
+        $this->logManager
+            ->shouldReceive('channel')
+            ->once()
+            ->with('model')
+            ->andReturnSelf();
+
+        $this->logManager
+            ->shouldReceive('info')
+            ->once();
+
         $result = $this->itemService->updateItem($id, $dto);
 
         Cache::shouldHaveReceived('forget')
@@ -284,6 +310,16 @@ class ItemServiceTest extends TestCase
             ->once()
             ->with($id)
             ->andReturn(true);
+
+        $this->logManager
+            ->shouldReceive('channel')
+            ->once()
+            ->with('model')
+            ->andReturnSelf();
+
+        $this->logManager
+            ->shouldReceive('info')
+            ->once();
 
         $result = $this->itemService->deleteItem($id);
 
@@ -365,6 +401,16 @@ class ItemServiceTest extends TestCase
             ->with($id, 10 - $amount)
             ->andReturn(true);
 
+        $this->logManager
+            ->shouldReceive('channel')
+            ->once()
+            ->with('stocks')
+            ->andReturnSelf();
+
+        $this->logManager
+            ->shouldReceive('info')
+            ->once();
+
         $result = $this->itemService->decrementStockItem($id, $amount);
 
         Cache::shouldHaveReceived('forget')
@@ -392,6 +438,16 @@ class ItemServiceTest extends TestCase
             ->once()
             ->with($id, $amount + 10)
             ->andReturn(true);
+
+        $this->logManager
+            ->shouldReceive('channel')
+            ->once()
+            ->with('stocks')
+            ->andReturnSelf();
+
+        $this->logManager
+            ->shouldReceive('info')
+            ->once();
 
         $result = $this->itemService->incrementStockItem($id, $amount);
         
