@@ -6,6 +6,7 @@ use App\DTOs\TransactionDTO;
 use App\Exceptions\InsufficientStockException;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Log\LogManager;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -13,7 +14,8 @@ class TransactionService
 {
     public function __construct(
         protected ItemService $itemService,
-        protected Transaction $transactionRepository
+        protected Transaction $transactionRepository,
+        protected LogManager $logger
     ) {}
 
     public function findTransaction(User $user, int $id)
@@ -46,6 +48,14 @@ class TransactionService
     
             $transaction = $this->transactionRepository->create($dto);
         
+            $this->logger->channel('model')->info('Create transaction.', [
+                'id' => $transaction->id,
+                'item_id' => $transaction->item_id,
+                'user_id' => $transaction->user_id,
+                'type' => $transaction->type,
+                'amount' => $transaction->amount
+            ]);
+
             DB::commit();
             return $transaction;
         } catch (ModelNotFoundException $th) {
@@ -82,7 +92,12 @@ class TransactionService
 
             $bool = $this->transactionRepository->delete($id);
 
-            if ($bool) DB::commit();
+            if ($bool) {
+                $this->logger->channel('model')->info('Delete transaction.', [
+                    'id' => $transaction->id,
+                ]);
+                DB::commit();
+            }
             
             return $bool;
         } catch (ModelNotFoundException $th) {
