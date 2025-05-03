@@ -13,6 +13,7 @@ use App\Services\ItemService;
 use App\Services\TransactionService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Log\LogManager;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,8 @@ class TransactionServiceTest extends TestCase
 
     private $transactionRepository;
 
+    private $logManager;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -42,9 +45,12 @@ class TransactionServiceTest extends TestCase
         /** @var \App\Contracts\Item&Mockery\MockInterface */
         $this->itemRepository = Mockery::mock(\App\Contracts\Item::class);
 
-        $this->itemService = new ItemService($this->itemRepository, Mockery::mock(\App\Contracts\Category::class));
+        /** @var LogManager&Mockery\MockInterface */
+        $this->logManager = Mockery::mock(LogManager::class);
 
-        $this->transactionService = new TransactionService($this->itemService, $this->transactionRepository);
+        $this->itemService = new ItemService($this->itemRepository, Mockery::mock(\App\Contracts\Category::class), $this->logManager);
+
+        $this->transactionService = new TransactionService($this->itemService, $this->transactionRepository, $this->logManager);
     }
 
     protected function tearDown(): void
@@ -229,6 +235,26 @@ class TransactionServiceTest extends TestCase
             ->with($dto)
             ->andReturn(new Transaction($dto->toArray()));
 
+        $this->logManager
+            ->shouldReceive('channel')
+            ->once()
+            ->with('model')
+            ->andReturnSelf();
+
+        $this->logManager
+            ->shouldReceive('info')
+            ->once();
+
+        $this->logManager
+            ->shouldReceive('channel')
+            ->once()
+            ->with('stocks')
+            ->andReturnSelf();
+
+        $this->logManager
+            ->shouldReceive('info')
+            ->once();
+
         $result = $this->transactionService->createTransaction($dto);
 
         Cache::shouldHaveReceived('forget')
@@ -264,6 +290,26 @@ class TransactionServiceTest extends TestCase
             ->once()
             ->with($dto)
             ->andReturn(new Transaction($dto->toArray()));
+
+        $this->logManager
+            ->shouldReceive('channel')
+            ->once()
+            ->with('model')
+            ->andReturnSelf();
+
+        $this->logManager
+            ->shouldReceive('info')
+            ->once();
+
+        $this->logManager
+            ->shouldReceive('channel')
+            ->once()
+            ->with('stocks')
+            ->andReturnSelf();
+
+        $this->logManager
+            ->shouldReceive('info')
+            ->once();
 
         $result = $this->transactionService->createTransaction($dto);
 
@@ -336,6 +382,26 @@ class TransactionServiceTest extends TestCase
             ->once()
             ->with($id)
             ->andReturn(true);
+
+        $this->logManager
+            ->shouldReceive('channel')
+            ->once()
+            ->with('model')
+            ->andReturnSelf();
+
+        $this->logManager
+            ->shouldReceive('info')
+            ->once();
+
+        $this->logManager
+            ->shouldReceive('channel')
+            ->once()
+            ->with('stocks')
+            ->andReturnSelf();
+
+        $this->logManager
+            ->shouldReceive('info')
+            ->once();
             
         $result = $this->transactionService->deleteTransaction($id);
         
@@ -421,6 +487,26 @@ class TransactionServiceTest extends TestCase
             ->once()
             ->with($id)
             ->andReturn(true);
+
+        $this->logManager
+            ->shouldReceive('channel')
+            ->once()
+            ->with('model')
+            ->andReturnSelf();
+
+        $this->logManager
+            ->shouldReceive('info')
+            ->once();
+
+        $this->logManager
+            ->shouldReceive('channel')
+            ->once()
+            ->with('stocks')
+            ->andReturnSelf();
+
+        $this->logManager
+            ->shouldReceive('info')
+            ->once();
 
         $result = $this->transactionService->deleteTransaction($id);
 
