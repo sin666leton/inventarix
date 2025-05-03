@@ -31,11 +31,6 @@ class CategoryServiceTest extends TestCase
 
         /** @var LogManager&Mockery\MockInterface */
         $this->logManagerMock = Mockery::mock(LogManager::class);
-        $this->logManagerMock->shouldReceive('channel')
-            ->with('model')
-            ->andReturnSelf();
-        
-        $this->logManagerMock->shouldReceive('info');
 
         $this->categoryService = new CategoryService($this->categoryRepository, $this->logManagerMock);
     }
@@ -130,6 +125,16 @@ class CategoryServiceTest extends TestCase
             ->with($dto)
             ->andReturn(new Category($dto->toArray()));
 
+        $this->logManagerMock
+            ->shouldReceive('channel')
+            ->once()
+            ->with('model')
+            ->andReturnSelf();
+
+        $this->logManagerMock
+            ->shouldReceive('info')
+            ->once();
+
         $result = $this->categoryService->createCategory($dto);
 
         Cache::shouldHaveReceived('forget')
@@ -223,6 +228,15 @@ class CategoryServiceTest extends TestCase
             ->with($id, $dto)
             ->andReturn($expectedData);
 
+        $this->logManagerMock
+            ->shouldReceive('channel')
+            ->once()
+            ->with('model')
+            ->andReturnSelf();
+
+        $this->logManagerMock
+            ->shouldReceive('info')
+            ->once();
             
         $result = $this->categoryService->updateCategory($id, $dto);
 
@@ -275,6 +289,15 @@ class CategoryServiceTest extends TestCase
             ->with($id)
             ->andReturn(true);
 
+        $this->logManagerMock
+            ->shouldReceive('channel')
+            ->once()
+            ->with('model')
+            ->andReturnSelf();
+
+        $this->logManagerMock
+            ->shouldReceive('info')
+            ->once();
             
         $result = $this->categoryService->deleteCategory($id);
     
