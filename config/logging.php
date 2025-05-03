@@ -133,6 +133,11 @@ return [
             'level' => 'info',
         ],
 
+        'stocks' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/stocks.log'),
+            'level' => 'info'
+        ]
     ],
 
 ];
