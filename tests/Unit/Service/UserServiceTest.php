@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\User;
 use App\Services\UserService;
 use Illuminate\Contracts\Hashing\Hasher;
+use Illuminate\Log\LogManager;
 use Illuminate\Support\Facades\Cache;
 use Mockery;
 use PHPUnit\Framework\TestCase;
@@ -16,6 +17,8 @@ class UserServiceTest extends TestCase
     protected $userRepository;
 
     protected $userService;
+
+    protected $logManagerMock;
 
     protected $hashMock;
 
@@ -29,7 +32,10 @@ class UserServiceTest extends TestCase
         /** @var Hasher&Mockery\MockInterface */
         $this->hashMock = Mockery::mock(Hasher::class);
 
-        $this->userService = new UserService($this->userRepository, $this->hashMock);
+        /** @var LogManager&Mockery\MockInterface */
+        $this->logManagerMock = Mockery::mock(LogManager::class);
+
+        $this->userService = new UserService($this->userRepository, $this->hashMock, $this->logManagerMock);
 
     }
 
@@ -70,6 +76,16 @@ class UserServiceTest extends TestCase
             ->with($user, $newName)
             ->andReturn(true);
 
+        $this->logManagerMock
+            ->shouldReceive('channel')
+            ->once()
+            ->with('model')
+            ->andReturnSelf();
+
+        $this->logManagerMock
+            ->shouldReceive('info')
+            ->once();
+
         $result = $this->userService->updateName($user, $newName);
     
         Cache::shouldHaveReceived("forget")
@@ -105,6 +121,16 @@ class UserServiceTest extends TestCase
             ->once()
             ->with($user, $newName)
             ->andReturn(true);
+
+        $this->logManagerMock
+            ->shouldReceive('channel')
+            ->once()
+            ->with('model')
+            ->andReturnSelf();
+
+        $this->logManagerMock
+            ->shouldReceive('info')
+            ->once();
 
         $result = $this->userService->updateName($user, $newName);
     
@@ -167,6 +193,16 @@ class UserServiceTest extends TestCase
             ->once()
             ->with($user, 'newEmail')
             ->andReturn(true);
+            
+        $this->logManagerMock
+            ->shouldReceive('channel')
+            ->once()
+            ->with('model')
+            ->andReturnSelf();
+
+        $this->logManagerMock
+            ->shouldReceive('info')
+            ->once();
 
         $result = $this->userService->updateEmail($user, 'newEmail', $password);
     
@@ -208,6 +244,16 @@ class UserServiceTest extends TestCase
             ->once()
             ->with($user, 'newEmail')
             ->andReturn(true);
+
+        $this->logManagerMock
+            ->shouldReceive('channel')
+            ->once()
+            ->with('model')
+            ->andReturnSelf();
+
+        $this->logManagerMock
+            ->shouldReceive('info')
+            ->once();
 
         $result = $this->userService->updateEmail($user, 'newEmail', $password);
     
@@ -278,6 +324,16 @@ class UserServiceTest extends TestCase
             ->with($user, 'Hash-password')
             ->andReturn(true);
 
+        $this->logManagerMock
+            ->shouldReceive('channel')
+            ->once()
+            ->with('model')
+            ->andReturnSelf();
+
+        $this->logManagerMock
+            ->shouldReceive('info')
+            ->once();
+
         $result = $this->userService->updatePassword($user, $oldInputPassword, $newPassword);
         
         Cache::shouldHaveReceived('forget')
@@ -325,6 +381,16 @@ class UserServiceTest extends TestCase
             ->once()
             ->with($user, 'Hash-password')
             ->andReturn(true);
+
+        $this->logManagerMock
+            ->shouldReceive('channel')
+            ->once()
+            ->with('model')
+            ->andReturnSelf();
+
+        $this->logManagerMock
+            ->shouldReceive('info')
+            ->once();
 
         $result = $this->userService->updatePassword($user, $oldInputPassword, $newPassword);
         
