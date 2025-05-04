@@ -36,7 +36,7 @@ cp .env.example .env
 php artisan key:generate
 # WARNING: Ini akan menghapus seluruh data di database!
 php artisan migrate:fresh --seed
-php artisan serve --env=local
+php artisan serve # jika ingin menggunakan env lokal --env=local
 
 ```
 # docker
