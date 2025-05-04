@@ -5,13 +5,15 @@ namespace App\Services;
 use App\Exceptions\InvalidCredentialException;
 use App\Models\User;
 use Illuminate\Contracts\Hashing\Hasher;
+use Illuminate\Log\LogManager;
 use Illuminate\Support\Facades\Cache;
 
 class UserService
 {
     public function __construct(
         protected \App\Contracts\User $userRepository,
-        protected Hasher $hash
+        protected Hasher $hash,
+        protected LogManager $logger
     ){}
 
     public function updateName(User $user, string $name)
@@ -22,6 +24,11 @@ class UserService
             $key = $user->role->name == "admin" ? "admin_": "staff_";
 
             Cache::forget($key.$user->id);
+            $this->logger->channel('model')->info('Update user name.', [
+                'id' => $user->id,
+                'role' => $user->role->name,
+                'name' => $name
+            ]);
         }
 
         return $result;
@@ -37,6 +44,11 @@ class UserService
             $key = $user->role->name == "admin" ? "admin_": "staff_";
 
             Cache::forget($key.$user->id);
+            $this->logger->channel('model')->info('Update user email.', [
+                'id' => $user->id,
+                'role' => $user->role->name,
+                'email' => $newEmail
+            ]);
         }
 
         return $result;
@@ -52,6 +64,10 @@ class UserService
             $key = $user->role->name == "admin" ? "admin_": "staff_";
 
             Cache::forget($key.$user->id);
+            $this->logger->channel('model')->info('Update user password.', [
+                'id' => $user->id,
+                'role' => $user->role->name,
+            ]);
         }
 
         return $result;
