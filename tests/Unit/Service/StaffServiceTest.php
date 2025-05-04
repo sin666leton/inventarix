@@ -7,6 +7,7 @@ use App\DTOs\UpdateUserDTO;
 use App\Models\User;
 use App\Services\StaffService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Log\LogManager;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
@@ -19,6 +20,8 @@ class StaffServiceTest extends TestCase
 
     protected $staffService;
 
+    protected $logManagerMock;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -26,7 +29,11 @@ class StaffServiceTest extends TestCase
         /** @var \App\Contracts\Staff&Mockery\MockInterface */
         $this->staffRepository = Mockery::mock(\App\Contracts\Staff::class);
 
-        $this->staffService = new StaffService($this->staffRepository);
+        /** @var \Illuminate\Log\LogManager&Mockery\MockInterface */
+        $this->logManagerMock = Mockery::mock(LogManager::class);
+
+        $this->staffService = new StaffService($this->staffRepository, $this->logManagerMock);
+
     }
 
     protected function tearDown(): void
@@ -121,6 +128,16 @@ class StaffServiceTest extends TestCase
             ->with($dto)
             ->andReturn(new User($dto->toArray()));
 
+        $this->logManagerMock
+            ->shouldReceive('channel')
+            ->once()
+            ->with('model')
+            ->andReturnSelf();
+
+        $this->logManagerMock
+            ->shouldReceive('info')
+            ->once();
+
         $result = $this->staffService->createStaff($dto);
 
         Hash::shouldHaveReceived('make')
@@ -163,6 +180,16 @@ class StaffServiceTest extends TestCase
             ->with($id, $dto)
             ->andReturn(new User());
 
+        $this->logManagerMock
+            ->shouldReceive('channel')
+            ->once()
+            ->with('model')
+            ->andReturnSelf();
+
+        $this->logManagerMock
+            ->shouldReceive('info')
+            ->once();
+
         $result = $this->staffService->updateStaff($id, $dto);
 
         Cache::shouldHaveReceived('forget')
@@ -201,6 +228,17 @@ class StaffServiceTest extends TestCase
             ->once()
             ->with($id)
             ->andReturn(true);
+
+        $this->logManagerMock
+            ->shouldReceive('channel')
+            ->once()
+            ->with('model')
+            ->andReturnSelf();
+
+        $this->logManagerMock
+            ->shouldReceive('info')
+            ->once();
+        
 
         $result = $this->staffService->deleteStaff($id);
     
