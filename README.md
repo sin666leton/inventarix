@@ -27,6 +27,7 @@
 
 ## Instalasi
 
+# lokal
 ```bash
 git clone https://github.com/username/inventarix.git
 cd inventarix
@@ -35,4 +36,16 @@ cp .env.example .env
 php artisan key:generate
 # WARNING: Ini akan menghapus seluruh data di database!
 php artisan migrate:fresh --seed
-php artisan serve
+php artisan serve --env=local
+
+```
+# docker
+```bash
+git clone https://github.com/username/inventarix.git
+cd inventarix
+cp .env.example .env
+docker compose up -d --build
+docker exec -it Inventarix composer install
+docker exec -it Inventarix php artisan key:generate
+# WARNING: Ini akan menghapus seluruh data di database!
+docker exec -it Inventarix php artisan migrate:fresh --seed
